@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="shortcut icon" href="icono.ico" type="image/x-icon">
+  <title>Flappy Bird</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      display: flex;
+      font-family: 'Roboto', sans-serif;
+    }
+    canvas {
+      display: block;
+      margin: 0;
+      flex-grow: 1;
+    }
+    #rewards {
+      width: 300px;
+      background: linear-gradient(to bottom, #9b2226, #660000); /* Degradado rojo */
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      font-size: 16px;
+      border-left: 2px solid #ccc;
+      box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    #rewards h2 {
+      margin-top: 0;
+      text-align: center;
+      color: white;
+    }
+    #rewards ul {
+      list-style: none;
+      padding: 0;
+    }
+    #rewards li {
+      margin: 10px 0;
+      color: white;
+    }
+    #particles {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* Estilo para la ventana emergente */
+    #gameOverModal {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(to top, #00b4db, #ffffff);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      display: none;
+    }
+    #gameOverModal a {
+      color: #007bff;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    #gameOverModal a:hover {
+      text-decoration: underline;
+    }
+    #gameOverModal h2 {
+      font-family: 'Roboto', sans-serif;
+      font-size: 24px;
+      color: black;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  <div id="rewards">
+    <h2>Recompensas</h2>
+    <ul>
+      <li>ADAN TOOLS (200 puntos)</li>
+      <li>ODIN CHECKER (50 puntos)</li>
+      <li>ZCOPIE (400 puntos)</li>
+      <li>IP TRACKER (100 puntos)</li>
+      <li>NUMBER TRACKER (150 puntos)</li>
+      <li>DISCORD FREE CODES (10 puntos)</li>
+      <li>CARDS GENERATOR (200 puntos)</li>
+      <li>ZCOPIE V2 (500 puntos)</li>
+      <li>KPC (1000 puntos)</li>
+      <li>FAKER (30 puntos)</li>
+      <li>Juego desarrollado por noctambulo</li>
+      <li>Si llega a los puntos deseados, mande una captura!  </li>
+    </ul>
+  </div>
+
+  <div id="gameOverModal">
+    <h2>ESTÁS INVITADO A UNIRTE A NUESTRO <a href="https://discord.gg/zRr7kVaYkd" target="_blank">DISCORD!</a></h2>
+  </div>
+
+  <canvas id="particles"></canvas> <!-- Canvas para partículas -->
+
+  <script>
+    // Partículas de ceniza roja
+    const particlesCanvas = document.getElementById('particles');
+    const pCtx = particlesCanvas.getContext('2d');
+    particlesCanvas.width = window.innerWidth - 300;
+    particlesCanvas.height = window.innerHeight;
+
+    let particles = [];
+
+    // Función para crear partículas
+    function createParticle() {
+      const size = Math.random() * 5 + 1; // Tamaño aleatorio
+      const x = Math.random() * particlesCanvas.width; // Posición aleatoria en el eje X
+      const y = Math.random() * particlesCanvas.height; // Posición aleatoria en el eje Y
+      const speedX = Math.random() * 0.5 - 0.25; // Velocidad en X
+      const speedY = Math.random() * 0.5 - 0.25; // Velocidad en Y
+      const opacity = Math.random() * 0.5 + 0.2; // Opacidad de la partícula
+
+      particles.push({ x, y, size, speedX, speedY, opacity });
+    }
+
+    // Función para actualizar y dibujar las partículas
+    function updateParticles() {
+      pCtx.clearRect(0, 0, particlesCanvas.width, particlesCanvas.height); // Limpiar canvas
+
+      // Crear nuevas partículas aleatorias
+      if (Math.random() < 0.1) createParticle();
+
+      // Actualizar las partículas existentes
+      particles.forEach((particle, index) => {
+        particle.x += particle.speedX;
+        particle.y += particle.speedY;
+        particle.opacity -= 0.01; // Reducir opacidad para simular desvanecimiento
+
+        // Si la opacidad de la partícula se acaba, la eliminamos
+        if (particle.opacity <= 0) {
+          particles.splice(index, 1);
+        } else {
+          // Dibujar la partícula
+          pCtx.beginPath();
+          pCtx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+          pCtx.fillStyle = `rgba(255, 0, 0, ${particle.opacity})`; // Color rojo con opacidad
+          pCtx.fill();
+        }
+      });
+    }
+
+    // Animación de las partículas
+    function animateParticles() {
+      updateParticles();
+      requestAnimationFrame(animateParticles);
+    }
+
+    // Llamar a la animación de partículas
+    animateParticles();
+
+    // Canvas principal para el juego
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Ajustar dimensiones del canvas
+    canvas.width = window.innerWidth - 300;
+    canvas.height = window.innerHeight;
+
+    // Cargar imágenes
+    const bgImage = new Image();
+    bgImage.src = 'bg.jpg';
+
+    const birdImage = new Image();
+    birdImage.src = 'pj.png';
+
+    // Variables del juego
+    let bird = { x: 50, y: canvas.height / 2, width: 60, height: 60, gravity: 0.3, lift: -6, velocity: 0 };
+    let pipes = [];
+    let frame = 0;
+    let score = 0;
+    let gameOver = false;
+    let pipeSpeed = 3; // Velocidad inicial de los tubos
+
+    // Listener para saltar
+    document.addEventListener('keydown', () => {
+      bird.velocity = bird.lift;
+    });
+
+    // Función para crear los tubos
+    function createPipe() {
+      const gap = 150;
+      const pipeHeight = Math.random() * (canvas.height - gap - 100) + 50;
+      pipes.push({ x: canvas.width, top: pipeHeight, bottom: pipeHeight + gap, width: 60 });
+    }
+
+    // Función para actualizar la velocidad en función del puntaje
+    function updateSpeed() {
+      if (score >= 15 && score < 25) {
+        pipeSpeed = 4;
+      } else if (score >= 25 && score < 30) {
+        pipeSpeed = 5;
+      } else if (score >= 30 && score < 40) {
+        pipeSpeed = 6;
+      } else if (score >= 40 && score < 50) {
+        pipeSpeed = 7;
+      } else if (score >= 50 && score < 55) {
+        pipeSpeed = 8;
+      } else if (score >= 55) {
+        pipeSpeed = 9;
+      }
+    }
+
+    // Actualizar el estado del juego
+    function update() {
+      if (gameOver) return;
+
+      // Actualizar la velocidad en función del puntaje
+      updateSpeed();
+
+      // Física del pájaro
+      bird.velocity += bird.gravity;
+      bird.y += bird.velocity;
+
+      // Generar tubos
+      if (frame % 90 === 0) createPipe();
+
+      // Mover los tubos
+      pipes.forEach(pipe => pipe.x -= pipeSpeed);
+
+      // Eliminar tubos fuera de pantalla
+      pipes = pipes.filter(pipe => pipe.x + pipe.width > 0);
+
+      // Detección de colisiones
+      pipes.forEach(pipe => {
+        const hitboxWidth = bird.width * 0.8;
+        const hitboxHeight = bird.height * 0.8;
+        const birdRight = bird.x + hitboxWidth;
+        const birdBottom = bird.y + hitboxHeight;
+
+        if (birdRight > pipe.x && bird.x < pipe.x + pipe.width && (bird.y < pipe.top || birdBottom > pipe.bottom)) {
+          gameOver = true;
+          document.getElementById('gameOverModal').style.display = 'block';
+        }
+      });
+
+      // Verificar si el pájaro sale fuera del canvas
+      if (bird.y < 0) bird.y = 0;
+      if (bird.y + bird.height > canvas.height) bird.y = canvas.height - bird.height;
+
+      // Actualizar puntuación
+      pipes.forEach(pipe => {
+        if (pipe.x + pipe.width < bird.x && !pipe.passed) {
+          pipe.passed = true;
+          score++;
+        }
+      });
+
+      frame++;
+    }
+
+    // Dibujar el juego
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Dibujar fondo
+      ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+
+      // Dibujar pájaro
+      ctx.drawImage(birdImage, bird.x, bird.y, bird.width, bird.height);
+
+      // Dibujar tubos
+      pipes.forEach(pipe => {
+        ctx.fillStyle = 'green';
+        ctx.fillRect(pipe.x, 0, pipe.width, pipe.top);
+        ctx.fillRect(pipe.x, pipe.bottom, pipe.width, canvas.height - pipe.bottom);
+      });
+
+      // Dibujar puntuación
+      ctx.fillStyle = 'white';
+      ctx.font = '30px Arial';
+      ctx.fillText(`Score: ${score}`, 20, 40);
+
+      // Si el juego terminó, mostrar el mensaje de Game Over
+      if (gameOver) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'white';
+        ctx.font = '50px Arial';
+        ctx.fillText('Game Over', canvas.width / 2 - 150, canvas.height / 2);
+      }
+    }
+
+    // Función principal de animación
+    function gameLoop() {
+      update();
+      draw();
+      if (!gameOver) {
+        requestAnimationFrame(gameLoop);
+      }
+    }
+
+    // Iniciar el juego
+    gameLoop();
+  </script>
+</body>
+</html>
