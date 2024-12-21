@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="shortcut icon" href="icono.ico" type="image/x-icon">
   <title>Flappy Bird</title>
   <style>
     body {
@@ -108,8 +107,6 @@
     // Partículas de ceniza roja
     const particlesCanvas = document.getElementById('particles');
     const pCtx = particlesCanvas.getContext('2d');
-    particlesCanvas.width = window.innerWidth - 300;
-    particlesCanvas.height = window.innerHeight;
 
     let particles = [];
 
@@ -151,7 +148,7 @@
       });
     }
 
-    // Animación de las partículas
+    // Función para la animación de partículas
     function animateParticles() {
       updateParticles();
       requestAnimationFrame(animateParticles);
@@ -164,19 +161,8 @@
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
-    // Ajustar dimensiones del canvas
-    canvas.width = window.innerWidth - 300;
-    canvas.height = window.innerHeight;
-
-    // Cargar imágenes
-    const bgImage = new Image();
-    bgImage.src = 'bg.jpg';
-
-    const birdImage = new Image();
-    birdImage.src = 'pj.png';
-
     // Variables del juego
-    let bird = { x: 50, y: canvas.height / 2, width: 60, height: 60, gravity: 0.3, lift: -6, velocity: 0 };
+    let bird = { x: 50, y: 0, width: 60, height: 60, gravity: 0.3, lift: -6, velocity: 0 };
     let pipes = [];
     let frame = 0;
     let score = 0;
@@ -188,11 +174,25 @@
       bird.velocity = bird.lift;
     });
 
+    // Ajustar tamaño del canvas al redimensionar la ventana
+    function resizeCanvas() {
+      canvas.width = window.innerWidth - 300;
+      canvas.height = window.innerHeight;
+      particlesCanvas.width = window.innerWidth - 300;
+      particlesCanvas.height = window.innerHeight;
+    }
+
+    // Ajustar las dimensiones del pájaro y los tubos de manera proporcional
+    function scaleGameElements() {
+      bird.width = canvas.width * 0.1;
+      bird.height = bird.width;
+    }
+
     // Función para crear los tubos
     function createPipe() {
-      const gap = 150;
+      const gap = canvas.height * 0.2;
       const pipeHeight = Math.random() * (canvas.height - gap - 100) + 50;
-      pipes.push({ x: canvas.width, top: pipeHeight, bottom: pipeHeight + gap, width: 60 });
+      pipes.push({ x: canvas.width, top: pipeHeight, bottom: pipeHeight + gap, width: canvas.width * 0.1 });
     }
 
     // Función para actualizar la velocidad en función del puntaje
@@ -265,10 +265,12 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // Dibujar fondo
-      ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#70c5ce';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Dibujar pájaro
-      ctx.drawImage(birdImage, bird.x, bird.y, bird.width, bird.height);
+      ctx.fillStyle = 'yellow';
+      ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
 
       // Dibujar tubos
       pipes.forEach(pipe => {
@@ -302,6 +304,13 @@
     }
 
     // Iniciar el juego
+    resizeCanvas(); // Ajustar al tamaño inicial
+    scaleGameElements(); // Escalar elementos del juego
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+      scaleGameElements();
+    });
+
     gameLoop();
   </script>
 </body>
